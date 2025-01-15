@@ -1,0 +1,4 @@
+name=Playdate Proxy
+author=Javier Alvarez
+description=Utility for reverse-engineering playdate
+bundleID=com.allthingsembedded.playdate-proxy
