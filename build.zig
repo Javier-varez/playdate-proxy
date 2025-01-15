@@ -19,29 +19,18 @@ pub fn build(b: *std.Build) !void {
         .single_threaded = true,
     });
     exe.link_emit_relocs = true;
-    exe.entry = .{ .symbol_name = "eventHandlerShim" };
+    exe.entry = .{ .symbol_name = "event_handler" };
 
-    var env_map = try std.process.getEnvMap(b.allocator);
-    defer env_map.deinit();
+    const sdk_path = try std.process.getEnvVarOwned(b.allocator, "PLAYDATE_SDK_PATH");
+    const gcc_path = try std.process.getEnvVarOwned(b.allocator, "ARM_GCC_PATH");
 
-    const sdk_path = env_map.get("PLAYDATE_SDK_PATH").?;
-    const gcc_path = env_map.get("ARM_GCC_PATH").?;
-
-    const c_api_path = b.pathJoin(&[_][]const u8{ sdk_path, "C_API" });
-    const setup_c_path = b.pathJoin(&[_][]const u8{ sdk_path, "C_API/buildsupport/setup.c" });
-    const ld_script_path = b.path("./link_map.ld");
-
-    const gcc_includes = b.pathJoin(&[_][]const u8{ gcc_path, "arm-none-eabi/include/" });
-
-    exe.addCSourceFile(.{
-        .file = std.Build.LazyPath{ .cwd_relative = setup_c_path },
-        .flags = &[_][]const u8{"-DTARGET_EXTENSION=1"},
-    });
+    const c_api_path = b.pathJoin(&.{ sdk_path, "C_API" });
+    const gcc_includes = b.pathJoin(&.{ gcc_path, "arm-none-eabi/include/" });
 
     exe.addIncludePath(std.Build.LazyPath{ .cwd_relative = c_api_path });
     exe.addIncludePath(std.Build.LazyPath{ .cwd_relative = gcc_includes });
 
-    exe.setLinkerScript(ld_script_path);
+    exe.setLinkerScript(b.path("./link_map.ld"));
 
     const write_files = b.addNamedWriteFiles("output source directory");
     _ = write_files.addCopyFile(exe.getEmittedBin(), "pdex.elf");
