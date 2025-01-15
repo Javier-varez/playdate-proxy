@@ -32,8 +32,6 @@ pub fn build(b: *std.Build) !void {
     const ld_script_path = b.path("./link_map.ld");
 
     const gcc_includes = b.pathJoin(&[_][]const u8{ gcc_path, "arm-none-eabi/include/" });
-    const gcc_libraries = b.pathJoin(&[_][]const u8{ gcc_path, "arm-none-eabi/lib/" });
-    const libgcc_libraries = b.pathJoin(&[_][]const u8{ gcc_path, "lib/gcc/arm-none-eabi/13.3.1/" });
 
     exe.addCSourceFile(.{
         .file = std.Build.LazyPath{ .cwd_relative = setup_c_path },
@@ -42,9 +40,6 @@ pub fn build(b: *std.Build) !void {
 
     exe.addIncludePath(std.Build.LazyPath{ .cwd_relative = c_api_path });
     exe.addIncludePath(std.Build.LazyPath{ .cwd_relative = gcc_includes });
-
-    exe.addLibraryPath(std.Build.LazyPath{ .cwd_relative = gcc_libraries });
-    exe.addLibraryPath(std.Build.LazyPath{ .cwd_relative = libgcc_libraries });
 
     exe.setLinkerScript(ld_script_path);
 

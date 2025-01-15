@@ -5,7 +5,7 @@ const PdApi = @cImport({
     @cInclude("pd_api.h");
 });
 
-pub export fn eventHandler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, arg: u32) c_int {
+pub export fn eventHandler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, arg: u32) callconv(.C) c_int {
     _ = arg;
 
     if (event == PdApi.kEventInit) {
@@ -15,7 +15,7 @@ pub export fn eventHandler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, a
     return 0;
 }
 
-pub export fn update(_pd: ?*const anyopaque) c_int {
+fn update(_pd: ?*const anyopaque) callconv(.C) c_int {
     const pd: *const PdApi.PlaydateAPI = @alignCast(@ptrCast(_pd.?));
 
     pd.graphics.*.clear.?(PdApi.kColorWhite);

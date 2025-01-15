@@ -1,6 +1,3 @@
-ENTRY(eventHandlerShim)
-GROUP(libgcc.a libc.a libm.a)
-
 PHDRS
 {
     program PT_LOAD;
