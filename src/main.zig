@@ -15,7 +15,7 @@ pub export fn event_handler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, 
         PdApi.kEventInit => {
             const fontpath: [*:0]const u8 = "/System/Fonts/Asheville-Sans-14-Bold.pft";
 
-            var pd_alloc = Alloc.PdAllocator.create(pd);
+            var pd_alloc = Alloc.PdAllocator.init(pd);
             var app_state = pd_alloc.allocator().create(AppState) catch {
                 pd.system.*.@"error".?("Unable to allocate any memory\n");
                 return 1;
@@ -38,7 +38,9 @@ pub export fn event_handler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, 
             app_state.font = font.?;
 
             pd.system.*.setUpdateCallback.?(update, app_state);
-            Serial.configure(app_state);
+            Serial.configure(app_state) catch {
+                pd.system.*.@"error".?("Unable to register serial callback");
+            };
         },
         else => {},
     }

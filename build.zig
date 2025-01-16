@@ -4,8 +4,9 @@ pub fn build(b: *std.Build) !void {
     const name = "playdate-proxy";
 
     const optimize = b.standardOptimizeOption(.{});
+    const target = b.standardTargetOptions(.{});
 
-    const target = b.resolveTargetQuery(try std.Target.Query.parse(.{
+    const playdate_target = b.resolveTargetQuery(try std.Target.Query.parse(.{
         .arch_os_abi = "thumb-freestanding-eabihf",
         .cpu_features = "cortex_m7+vfp4d16sp",
     }));
@@ -13,7 +14,7 @@ pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{
         .name = name,
         .root_source_file = b.path("src/main.zig"),
-        .target = target,
+        .target = playdate_target,
         .optimize = optimize,
         .pic = true,
         .single_threaded = true,
@@ -58,4 +59,16 @@ pub fn build(b: *std.Build) !void {
         .install_dir = .{ .prefix = {} },
         .install_subdir = "pdx_src",
     });
+
+    const test_step = b.step("test", "Run unit tests");
+
+    const unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+    });
+    unit_tests.addIncludePath(std.Build.LazyPath{ .cwd_relative = c_api_path });
+    unit_tests.linkLibC();
+
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+    test_step.dependOn(&run_unit_tests.step);
 }

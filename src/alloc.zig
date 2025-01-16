@@ -43,7 +43,7 @@ pub const PdAllocator = struct {
         .free = pd_free,
     };
 
-    pub fn create(pd: *PdApi.PlaydateAPI) Self {
+    pub fn init(pd: *PdApi.PlaydateAPI) Self {
         return Self{ .pd = pd };
     }
 
