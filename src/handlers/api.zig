@@ -41,14 +41,12 @@ fn resolveApi(value: anytype, path: []const []const u8) ?*const anyopaque {
 }
 
 fn handler(app_state: *AppState, args: [][]const u8) void {
-    const pd = app_state.pd;
-
-    if (resolveApi(pd, args)) |ptr| {
-        pd.system.*.logToConsole.?("Ptr is %p", ptr);
+    if (resolveApi(app_state.pd, args)) |ptr| {
+        app_state.print("Ptr is {}", .{ptr});
         return;
     }
 
-    pd.system.*.logToConsole.?("Unknown method");
+    app_state.print("Unknown method {s}", .{args});
 }
 
 pub fn register() !void {
@@ -57,7 +55,7 @@ pub fn register() !void {
 
 test "resolveApi" {
     const Apis = struct {
-        fn format_str(a: [*c][*c]u8, b: [*c]const u8, ...) callconv(.C) c_int {
+        fn formatStr(a: [*c][*c]u8, b: [*c]const u8, ...) callconv(.C) c_int {
             _ = a;
             _ = b;
             return 0;
@@ -65,7 +63,7 @@ test "resolveApi" {
     };
 
     const system = PdApi.playdate_sys{
-        .formatString = Apis.format_str,
+        .formatString = Apis.formatStr,
     };
 
     const api = PdApi.PlaydateAPI{

@@ -16,17 +16,6 @@ pub export fn event_handler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, 
             const fontpath: [*:0]const u8 = "/System/Fonts/Asheville-Sans-14-Bold.pft";
 
             var pd_alloc = Alloc.PdAllocator.init(pd);
-            var app_state = pd_alloc.allocator().create(AppState) catch {
-                pd.system.*.@"error".?("Unable to allocate any memory\n");
-                return 1;
-            };
-
-            app_state.allocator = pd_alloc;
-            app_state.pd = pd;
-            app_state.x = (400 - TEXT_WIDTH) / 2;
-            app_state.y = (240 - TEXT_HEIGHT) / 2;
-            app_state.dx = 1;
-            app_state.dy = 2;
 
             var err: ?[*:0]const u8 = null;
             const font = pd.graphics.*.loadFont.?(fontpath, &err);
@@ -35,11 +24,23 @@ pub export fn event_handler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, 
                 pd.system.*.@"error".?("Couldn't load font %s: %s", fontpath, err);
             }
 
-            app_state.font = font.?;
+            const app_state = pd_alloc.allocator().create(AppState) catch {
+                pd.system.*.@"error".?("Unable to allocate any memory\n");
+                return 1;
+            };
+            app_state.* = AppState{
+                .allocator = pd_alloc,
+                .pd = pd,
+                .x = (400 - TEXT_WIDTH) / 2,
+                .y = (240 - TEXT_HEIGHT) / 2,
+                .dx = 1,
+                .dy = 1,
+                .font = font.?,
+            };
 
             pd.system.*.setUpdateCallback.?(update, app_state);
             Serial.configure(app_state) catch {
-                pd.system.*.@"error".?("Unable to register serial callback");
+                app_state.panic("Unable to register serial callback", .{});
             };
         },
         else => {},

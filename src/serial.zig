@@ -29,7 +29,6 @@ pub fn configure(app_state: *AppState) !void {
 
 fn serial_callback(message: [*:0]const u8) callconv(.C) void {
     const app_state = serial_state.?.app_state;
-    app_state.pd.system.*.logToConsole.?("Got: %s", message);
 
     var args = std.ArrayList([]const u8).init(app_state.allocator.allocator());
     defer args.deinit();
@@ -40,12 +39,14 @@ fn serial_callback(message: [*:0]const u8) callconv(.C) void {
         if (v.len == 0) continue;
 
         args.append(v) catch {
-            app_state.pd.system.*.logToConsole.?("Out of memory");
+            app_state.print("Out of memory while collecting args for command", .{});
+            return;
         };
     }
 
     if (args.items.len == 0) {
-        app_state.pd.system.*.logToConsole.?("Please, specify a command");
+        app_state.print("Please, specify a command to handle", .{});
+        return;
     }
 
     const cmd = args.items[0];
@@ -54,8 +55,11 @@ fn serial_callback(message: [*:0]const u8) callconv(.C) void {
     for (serial_state.?.commands.items) |c| {
         if (std.mem.eql(u8, cmd, c.name)) {
             c.handler(app_state, other_args);
+            return;
         }
     }
+
+    app_state.print("Unknown command {s}", .{cmd});
 }
 
 pub fn register_command(command: []const u8, handler: Handler) !void {
