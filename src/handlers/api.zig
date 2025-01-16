@@ -23,6 +23,10 @@ fn resolveApi(value: anytype, path: []const []const u8) ?*const anyopaque {
             return resolveApi(value.?, path);
         },
         .Struct => |s| {
+            if (path.len == 0) {
+                return null;
+            }
+
             inline for (s.fields) |field| {
                 if (std.mem.eql(u8, field.name, path[0])) {
                     const inner = @field(value, field.name);

@@ -14,7 +14,8 @@ pub const PdAllocator = struct {
         const self: *const Self = @alignCast(@ptrCast(ctx));
         if (self.pd.system.*.realloc.?(null, len)) |ptr| {
             if (ptr_align != 0 and !std.mem.isAligned(@intFromPtr(ptr), ptr_align)) {
-                self.pd.system.*.@"error".?("Unable to get pointer with alignment %d", ptr_align);
+                const ptr_align_size: usize = ptr_align;
+                self.pd.system.*.@"error".?("Unable to allocate pointer with alignment %d", ptr_align_size);
                 unreachable;
             }
             return @ptrCast(ptr);
