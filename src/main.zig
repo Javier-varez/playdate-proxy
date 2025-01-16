@@ -5,40 +5,15 @@ const Serial = @import("serial.zig");
 const Alloc = @import("alloc.zig");
 const AppState = @import("app_state.zig");
 
-const TEXT_WIDTH: isize = 86;
-const TEXT_HEIGHT: isize = 16;
-
 pub export fn event_handler(pd: *PdApi.PlaydateAPI, event: PdApi.PDSystemEvent, arg: u32) callconv(.C) c_int {
     _ = arg;
 
     switch (event) {
         PdApi.kEventInit => {
-            const fontpath: [*:0]const u8 = "/System/Fonts/Asheville-Sans-14-Bold.pft";
-
-            var pd_alloc = Alloc.PdAllocator.init(pd);
-
-            var err: ?[*:0]const u8 = null;
-            const font = pd.graphics.*.loadFont.?(fontpath, &err);
-
-            if (font == null) {
-                pd.system.*.@"error".?("Couldn't load font %s: %s", fontpath, err);
-            }
-
-            const app_state = pd_alloc.allocator().create(AppState) catch {
-                pd.system.*.@"error".?("Unable to allocate any memory\n");
-                return 1;
-            };
-            app_state.* = AppState{
-                .allocator = pd_alloc,
-                .pd = pd,
-                .x = (400 - TEXT_WIDTH) / 2,
-                .y = (240 - TEXT_HEIGHT) / 2,
-                .dx = 1,
-                .dy = 1,
-                .font = font.?,
-            };
+            const app_state = AppState.init(pd);
 
             pd.system.*.setUpdateCallback.?(update, app_state);
+
             Serial.configure(app_state) catch {
                 app_state.panic("Unable to register serial callback", .{});
             };
@@ -65,11 +40,11 @@ fn update(_app_state: ?*anyopaque) callconv(.C) c_int {
     const str = "Hello world!";
     _ = pd.graphics.*.drawText.?(str, str.len, PdApi.kASCIIEncoding, @intCast(app_state.x), @intCast(app_state.y));
 
-    if ((app_state.x < 0) or (app_state.x > LCD_COLUMNS - TEXT_WIDTH)) {
+    if ((app_state.x < 0) or (app_state.x > LCD_COLUMNS - AppState.TEXT_WIDTH)) {
         app_state.dx = -app_state.dx;
     }
 
-    if ((app_state.y < 0) or (app_state.y > LCD_ROWS - TEXT_HEIGHT)) {
+    if ((app_state.y < 0) or (app_state.y > LCD_ROWS - AppState.TEXT_HEIGHT)) {
         app_state.dy = -app_state.dy;
     }
 

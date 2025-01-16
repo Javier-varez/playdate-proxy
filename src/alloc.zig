@@ -5,15 +5,18 @@ const PdApi = @import("pd_api.zig").Api;
 pub const PdAllocator = struct {
     const Self = @This();
 
-    pd: *PdApi.PlaydateAPI,
+    pd: *const PdApi.PlaydateAPI,
 
     fn pd_alloc(ctx: *anyopaque, len: usize, ptr_align: u8, ret_addr: usize) ?[*]u8 {
         // TODO: use alignment argument!
-        _ = ptr_align;
         _ = ret_addr;
 
         const self: *const Self = @alignCast(@ptrCast(ctx));
         if (self.pd.system.*.realloc.?(null, len)) |ptr| {
+            if (ptr_align != 0 and !std.mem.isAligned(@intFromPtr(ptr), ptr_align)) {
+                self.pd.system.*.@"error".?("Unable to get pointer with alignment %d", ptr_align);
+                unreachable;
+            }
             return @ptrCast(ptr);
         }
         return null;
@@ -43,7 +46,7 @@ pub const PdAllocator = struct {
         .free = pd_free,
     };
 
-    pub fn init(pd: *PdApi.PlaydateAPI) Self {
+    pub fn init(pd: *const PdApi.PlaydateAPI) Self {
         return Self{ .pd = pd };
     }
 
