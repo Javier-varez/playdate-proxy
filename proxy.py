@@ -185,6 +185,36 @@ class Proxy():
 
         print(asm.disasm(data, vma = vma, arch='thumb'))
 
+    def _hexdump(self, addr, data):
+        bytes_per_line = 16
+        num_lines = (len(data) + bytes_per_line - 1) // bytes_per_line
+        for l in range(num_lines):
+            print(f'{addr + l * bytes_per_line:08x}  ' , end = '')
+            for b in range(l * bytes_per_line, min((l + 1) * bytes_per_line, len(data))):
+                if b % bytes_per_line == bytes_per_line // 2:
+                    print(' ', end = '')
+                print(f'{data[b]:02x} ', end = '')
+            print('')
+
+    def _memdump(self, addr, l):
+        addr = base64.standard_b64encode(struct.pack("<I", addr)).decode('UTF-8')
+        l = base64.standard_b64encode(struct.pack("<I", l)).decode('UTF-8')
+        self.dev.write(f'msg memdump {addr} {l}\r\n'.encode('UTF-8'))
+        self.dev.readline() # discard the echo
+
+        encoded_data = self.dev.readline()
+        return base64.standard_b64decode(encoded_data)
+
+    def m(self, addr, l = 0x40):
+        """ Reads bytes at the given address """
+        data = self._memdump(addr, l);
+        self._hexdump(addr, data)
+
+    def disasm(self, addr, l = 0x40):
+        """ Reads bytes at the given address, interpreting it as code """
+        data = self._memdump(addr, l);
+        print(asm.disasm(data, vma = addr, arch='thumb'))
+
     def __repr__(self):
         result = ""
         for attr in dir(self):
