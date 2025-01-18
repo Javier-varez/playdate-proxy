@@ -69,7 +69,7 @@ class Proxy():
             raise Exception(f'Found more than one Playdate device: {serial_paths}')
         self.serial_path = serial_paths[0]
 
-        self.dev = serial.Serial(self.serial_path, 115200)
+        self.dev = serial.Serial(self.serial_path, 115200, exclusive=True)
         self.dev.flushOutput()
         self.dev.flushInput()
         self.dev.timeout = 1
