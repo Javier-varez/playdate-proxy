@@ -215,6 +215,53 @@ class Proxy():
         data = self._memdump(addr, l);
         print(asm.disasm(data, vma = addr, arch='thumb'))
 
+    def _read_reg(self, size, addr, value_type):
+        addr = base64.standard_b64encode(struct.pack("<I", addr)).decode('UTF-8')
+        cmd = f'msg r{size} {addr}\r\n'
+        self.dev.write(cmd.encode('UTF-8'))
+        self.dev.readline() # Get rid of the echo
+
+        encoded_value = self.dev.readline().decode('UTF-8')
+        value, = struct.unpack(f"<{value_type}", base64.standard_b64decode(encoded_value))
+        return value
+
+    def r8(self, addr):
+        """ reads a 8 bit value from memory, at the given address """
+        print(f'0x{self._read_reg(8, addr, 'B'):x}')
+
+    def r16(self, addr):
+        """ reads a 16 bit value from memory, at the given address """
+        print(f'0x{self._read_reg(16, addr, 'H'):x}')
+
+    def r32(self, addr):
+        """ reads a 32 bit value from memory, at the given address """
+        print(f'0x{self._read_reg(32, addr, 'I'):x}')
+
+
+    def _write_reg(self, size, addr, value, value_type):
+        addr = base64.standard_b64encode(struct.pack("<I", addr)).decode('UTF-8')
+        value = base64.standard_b64encode(struct.pack(f"<{value_type}", value)).decode('UTF-8')
+        cmd = f'msg w{size} {addr} {value}\r\n'
+        self.dev.write(cmd.encode('UTF-8'))
+        self.dev.readline() # Get rid of the echo
+
+        response = self.dev.readline().decode('UTF-8');
+        if not response.startswith('Ok:'):
+            raise Exception(f"Error writting register: {response}")
+        print(response)
+
+    def w8(self, addr, value):
+        """ writes a 8 bit value to memory, at the given address """
+        self._write_reg(8, addr, value, 'B')
+
+    def w16(self, addr, value):
+        """ writes a 16 bit value to memory, at the given address """
+        self._write_reg(16, addr, value, 'H')
+
+    def w32(self, addr, value):
+        """ writes a 32 bit value to memory, at the given address """
+        self._write_reg(32, addr, value, 'I')
+
     def __repr__(self):
         result = ""
         for attr in dir(self):

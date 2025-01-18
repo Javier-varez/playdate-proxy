@@ -4,7 +4,7 @@ const PdApi = @import("pd_api.zig").Api;
 const AppState = @import("app_state.zig");
 const Handlers = @import("handlers.zig");
 
-const Handler = *const fn (app_state: *AppState, args: []const []const u8) void;
+pub const Handler = *const fn (app_state: *AppState, args: []const []const u8) void;
 
 const Command = struct {
     name: []const u8,
